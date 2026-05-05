@@ -19,6 +19,9 @@
 - `workflow-api` uses an isolated config/database layer instead of importing `meeting_api.database` or `admin_models.database` because those modules validate DB env at import time.
 - Vexa already owns a `calendar_events` table, so workflow calendar state uses `workflow_calendar_events`.
 - Workflow schema convergence uses the repo's `libs/schema-sync` package.
+- Phase 3 uses explicit `user_id` in workflow requests for now; Cloudflare/Vexa identity header mapping is deferred.
+- Google Calendar event creation uses `conferenceData.createRequest` for Google Meet.
+- Microsoft Graph event creation uses `isOnlineMeeting=true` and `onlineMeetingProvider=teamsForBusiness`.
 - Local shell has Docker CLI `29.4.0`, but `docker compose` plugin and `docker-compose` binary are unavailable.
 
 ## Architecture Findings
@@ -36,3 +39,4 @@
 - Which local LLM API shape should be targeted first: OpenAI-compatible, Ollama, or another internal endpoint?
 - Which SMTP provider/server will be used for first real verification?
 - Should Docker Compose plugin installation be handled on this machine, or should compose validation run on the target VM?
+- OAuth start/callback endpoints are still pending; current meeting creation assumes an encrypted connected access token already exists.

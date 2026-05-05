@@ -76,19 +76,19 @@ Acceptance:
 
 ### Phase 3: Calendar Integrations
 
-Status: pending
+Status: in_progress
 
 Tasks:
 
 - Implement Google OAuth callback handling and token refresh.
 - Implement Microsoft Graph OAuth callback handling and token refresh.
-- Implement `POST /workflow/meetings`.
-- Implement `GET /workflow/meetings`.
+- Implement `POST /workflow/meetings`. Done for connected-account access-token flow; OAuth callback/token refresh endpoints remain pending.
+- Implement `GET /workflow/meetings`. Done.
 - Create calendar events with video conferencing:
-  - Google Calendar / Google Meet
-  - Outlook Calendar / Teams
-- Store provider event IDs, meeting URLs, attendees, status, and timestamps.
-- Add mocked tests for Google Calendar and Microsoft Graph APIs.
+  - Google Calendar / Google Meet Done.
+  - Outlook Calendar / Teams Done.
+- Store provider event IDs, meeting URLs, attendees, status, and timestamps. Done.
+- Add mocked tests for Google Calendar and Microsoft Graph APIs. Done.
 
 Acceptance:
 
@@ -226,3 +226,4 @@ Acceptance:
 | 2026-05-05 | `python` command not found | Ran focused workflow-api tests with `python -m pytest` | Retried with available pytest binary |
 | 2026-05-05 | `python3 -m pytest` had no pytest installed | Ran focused workflow-api tests with `python3 -m pytest` | Used `/Library/Frameworks/Python.framework/Versions/3.13/bin/pytest`; tests passed |
 | 2026-05-05 | `docker compose` plugin unavailable (`unknown shorthand flag: 'f'`) | Tried compose config validation | Docker compose validation pending until compose plugin or legacy binary is installed |
+| 2026-05-05 | `pytest.mark.asyncio` unsupported | Wrote async provider tests with pytest asyncio marker | Reworked tests to use `asyncio.run`; tests passed |

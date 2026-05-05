@@ -7,6 +7,7 @@ from fastapi import FastAPI
 
 from app.config import Settings
 from app.database import Database
+from app.routes import router as workflow_router
 
 settings = Settings.from_env()
 logging.basicConfig(level=settings.log_level)
@@ -38,6 +39,7 @@ app = FastAPI(
     openapi_url="/openapi.json" if _PUBLIC_DOCS else None,
     lifespan=lifespan,
 )
+app.include_router(workflow_router)
 
 
 @app.get("/health")

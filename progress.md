@@ -47,7 +47,14 @@
 - Added model and crypto tests.
 - Verification:
   - `/Library/Frameworks/Python.framework/Versions/3.13/bin/pytest services/workflow-api/tests -q` passed: `10 passed`.
+- Started Phase 3 calendar integration.
+- Added workflow schemas and provider clients.
+- Added `POST /workflow/meetings` and `GET /workflow/meetings`.
+- Added mocked Google Calendar and Microsoft Graph client tests.
+- Current limitation: OAuth start/callback and token refresh are not implemented yet; endpoints require an encrypted connected account row.
+- Verification:
+  - `/Library/Frameworks/Python.framework/Versions/3.13/bin/pytest services/workflow-api/tests -q` passed: `13 passed`.
 
 ## Current Next Step
 
-Commit and push the Phase 2 model/encryption slice, then proceed to Phase 3 calendar API scaffolding.
+Commit and push Phase 3 calendar API/client scaffolding, then implement OAuth connect/callback and token refresh.

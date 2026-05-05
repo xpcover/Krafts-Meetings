@@ -21,8 +21,10 @@ This first slice provides the service skeleton, configuration, database connecti
 | Method | Path | Description |
 | --- | --- | --- |
 | `GET` | `/health` | Service health and database configuration status |
+| `POST` | `/workflow/meetings` | Create a Google Calendar or Outlook event with conferencing |
+| `GET` | `/workflow/meetings?user_id={id}` | List workflow-created/synced meetings for a user |
 
-Planned public workflow endpoints are tracked in the root `task_plan.md`.
+`POST /workflow/meetings` currently accepts `user_id` in the request body. Cloudflare/Vexa identity header integration is planned for a later auth pass.
 
 ## Tables
 
