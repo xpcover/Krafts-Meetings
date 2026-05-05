@@ -99,17 +99,17 @@ Acceptance:
 
 ### Phase 4: Vexa Bot and Transcript Integration
 
-Status: pending
+Status: in_progress
 
 Tasks:
 
-- Add Vexa API client in `workflow-api`.
-- Schedule a Vexa bot when a meeting is created with `auto_join=true`.
-- Store Vexa meeting/bot IDs on `calendar_events`.
+- Add Vexa API client in `workflow-api`. Done.
+- Schedule a Vexa bot when a meeting is created with `auto_join=true`. Done when `VEXA_API_KEY` is configured.
+- Store Vexa meeting/bot IDs on `calendar_events`. Done for native meeting IDs on `workflow_calendar_events`; Vexa response is stored in metadata.
 - Implement transcript retrieval from Vexa API Gateway.
 - Implement `POST /workflow/webhooks/vexa/meeting-completed`.
 - Add signature/shared-secret validation for Vexa webhook requests.
-- Add mocked tests for Vexa `/bots` and `/transcripts`.
+- Add mocked tests for Vexa `/bots` and `/transcripts`. `/bots` done; `/transcripts` pending.
 
 Acceptance:
 

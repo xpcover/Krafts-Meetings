@@ -64,7 +64,13 @@
 - Verified against current official Google and Microsoft docs before implementation.
 - Verification:
   - `/Library/Frameworks/Python.framework/Versions/3.13/bin/pytest services/workflow-api/tests -q` passed: `18 passed`.
+- Started Phase 4 Vexa integration.
+- Added Vexa API Gateway client for bot scheduling.
+- Integrated bot scheduling into `POST /workflow/meetings` for `auto_join=true`.
+- Added tests for native meeting ID parsing and `/bots` payloads.
+- Verification:
+  - `/Library/Frameworks/Python.framework/Versions/3.13/bin/pytest services/workflow-api/tests -q` passed: `21 passed`.
 
 ## Current Next Step
 
-Commit and push OAuth slice, then implement access-token refresh integration and Vexa bot scheduling for `auto_join=true`.
+Commit and push Vexa scheduling slice, then implement transcript retrieval and Vexa completion webhook handling.

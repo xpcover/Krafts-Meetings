@@ -12,6 +12,7 @@ from app.crypto import TokenCipher
 from app.models import IntegrationAccount, WorkflowCalendarEvent
 from app.oauth import authorization_url, exchange_code, parse_state, token_expiry
 from app.schemas import CalendarProvider, MeetingCreate, MeetingResponse, OAuthCallbackResponse, OAuthStartResponse
+from app.vexa_client import VexaClient
 
 router = APIRouter(prefix="/workflow", tags=["Workflow"])
 
@@ -23,6 +24,13 @@ async def get_db(request: Request):
 
 def get_calendar_client() -> CalendarClient:
     return CalendarClient()
+
+
+def get_vexa_client(request: Request) -> VexaClient | None:
+    settings = request.app.state.settings
+    if not settings.vexa_api_key:
+        return None
+    return VexaClient(settings.vexa_api_url, settings.vexa_api_key)
 
 
 def _vexa_platform(provider: CalendarProvider) -> str:
@@ -65,6 +73,7 @@ async def create_meeting(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
     calendar_client: Annotated[CalendarClient, Depends(get_calendar_client)],
+    vexa_client: Annotated[VexaClient | None, Depends(get_vexa_client)],
 ):
     settings = request.app.state.settings
     if not settings.encryption_key:
@@ -85,6 +94,22 @@ async def create_meeting(
 
     access_token = TokenCipher(settings.encryption_key).decrypt(account.encrypted_access_token)
     provider_event = await calendar_client.create_event(req.provider, access_token, req)
+    vexa_platform = _vexa_platform(req.provider)
+    sync_status = "created"
+    vexa_meeting_id = None
+    metadata = {"provider_response": provider_event.raw}
+    if req.auto_join and provider_event.meeting_url:
+        if vexa_client is None:
+            sync_status = "created_bot_not_configured"
+        else:
+            scheduled_bot = await vexa_client.schedule_bot(
+                vexa_platform,
+                provider_event.meeting_url,
+                f"Krafts - {req.title}",
+            )
+            vexa_meeting_id = scheduled_bot.native_meeting_id
+            sync_status = "bot_scheduled"
+            metadata["vexa_bot"] = scheduled_bot.response
 
     values = {
         "user_id": req.user_id,
@@ -97,13 +122,14 @@ async def create_meeting(
         "timezone": req.timezone,
         "meeting_url": provider_event.meeting_url,
         "conference_provider": provider_event.conference_provider,
-        "vexa_platform": _vexa_platform(req.provider),
-        "attendees": [attendee.model_dump() for attendee in req.attendees],
+        "vexa_platform": vexa_platform,
+        "vexa_meeting_id": vexa_meeting_id,
+        "attendees": [attendee.model_dump(mode="json") for attendee in req.attendees],
         "agenda": req.agenda,
         "auto_join": req.auto_join,
         "send_invites": req.send_invites,
-        "sync_status": "created",
-        "metadata": {"provider_response": provider_event.raw},
+        "sync_status": sync_status,
+        "metadata": metadata,
     }
     stmt = (
         pg_insert(WorkflowCalendarEvent)
