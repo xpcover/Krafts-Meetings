@@ -18,7 +18,10 @@
   - Cloudflare control plane
   - dashboard/API consumption
   - end-to-end verification
+- Created GitHub org fork: `https://github.com/xpcover/Krafts-Meetings`.
+- Updated local `vexa-review` checkout to use `xpcover/Krafts-Meetings` as `origin` and `Vexa-ai/vexa` as `upstream`.
+- Pushed initial planning files to `xpcover/Krafts-Meetings`.
 
 ## Current Next Step
 
-Resolve Phase 0: decide whether implementation should happen in `vexa-review` or in a clean fork/worktree, then scaffold `services/workflow-api`.
+Continue Phase 0: optionally rename the local checkout from `vexa-review` to `Krafts-Meetings`, then scaffold `services/workflow-api`.

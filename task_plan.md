@@ -10,16 +10,17 @@ Implement the saved architecture in `cloudflare-vexa-meeting-assistant-plan.md`:
 - Architecture plan: complete
 - Implementation task list: in progress
 - Code implementation: not started
+- GitHub implementation repo: `xpcover/Krafts-Meetings`
 
 ## Phases
 
 ### Phase 0: Repo and Runtime Baseline
 
-Status: pending
+Status: in_progress
 
 Tasks:
 
-- Confirm whether implementation should happen in the cloned `vexa-review` tree or a clean fork/worktree.
+- Confirm whether implementation should happen in the cloned `vexa-review` tree or a clean fork/worktree. Done: implementation target is the `xpcover/Krafts-Meetings` fork, currently checked out locally at `vexa-review`.
 - Decide package layout for new `workflow-api` service and Cloudflare Worker.
 - Verify current Vexa compose stack assumptions: Postgres, Redis, MinIO, API Gateway, Meeting API, Runtime API.
 - Identify existing shared model/database utilities that can be reused safely.
