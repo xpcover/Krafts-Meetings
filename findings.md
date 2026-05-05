@@ -22,6 +22,10 @@
 - Phase 3 uses explicit `user_id` in workflow requests for now; Cloudflare/Vexa identity header mapping is deferred.
 - Google Calendar event creation uses `conferenceData.createRequest` for Google Meet.
 - Microsoft Graph event creation uses `isOnlineMeeting=true` and `onlineMeetingProvider=teamsForBusiness`.
+- Official Google docs confirm web-server OAuth uses `https://accounts.google.com/o/oauth2/v2/auth`, offline access requires `access_type=offline`, and token exchange uses `https://oauth2.googleapis.com/token`.
+- Official Google Calendar docs confirm `conferenceData.createRequest` with `conferenceDataVersion=1` for conference creation.
+- Official Microsoft docs confirm v2 authorize/token endpoints under `https://login.microsoftonline.com/{tenant}/oauth2/v2.0/*` and `offline_access` for refresh tokens.
+- OAuth state is signed with HMAC instead of persisted in a DB table.
 - Local shell has Docker CLI `29.4.0`, but `docker compose` plugin and `docker-compose` binary are unavailable.
 
 ## Architecture Findings
@@ -39,4 +43,4 @@
 - Which local LLM API shape should be targeted first: OpenAI-compatible, Ollama, or another internal endpoint?
 - Which SMTP provider/server will be used for first real verification?
 - Should Docker Compose plugin installation be handled on this machine, or should compose validation run on the target VM?
-- OAuth start/callback endpoints are still pending; current meeting creation assumes an encrypted connected access token already exists.
+- OAuth start/callback endpoints now exist; automatic access-token refresh before provider calls is still pending.

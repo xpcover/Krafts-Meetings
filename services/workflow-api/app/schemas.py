@@ -57,3 +57,14 @@ class ProviderEvent(BaseModel):
     meeting_url: Optional[str] = None
     conference_provider: Optional[str] = None
     raw: dict[str, Any] = Field(default_factory=dict)
+
+
+class OAuthStartResponse(BaseModel):
+    provider: CalendarProvider
+    authorization_url: str
+
+
+class OAuthCallbackResponse(BaseModel):
+    provider: CalendarProvider
+    user_id: int
+    status: str

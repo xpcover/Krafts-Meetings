@@ -54,7 +54,17 @@
 - Current limitation: OAuth start/callback and token refresh are not implemented yet; endpoints require an encrypted connected account row.
 - Verification:
   - `/Library/Frameworks/Python.framework/Versions/3.13/bin/pytest services/workflow-api/tests -q` passed: `13 passed`.
+- Implemented OAuth start/callback helpers and routes:
+  - signed OAuth state
+  - Google authorization URL
+  - Microsoft authorization URL
+  - code exchange helpers
+  - refresh-token helper
+  - encrypted token upsert into `integration_accounts`
+- Verified against current official Google and Microsoft docs before implementation.
+- Verification:
+  - `/Library/Frameworks/Python.framework/Versions/3.13/bin/pytest services/workflow-api/tests -q` passed: `18 passed`.
 
 ## Current Next Step
 
-Commit and push Phase 3 calendar API/client scaffolding, then implement OAuth connect/callback and token refresh.
+Commit and push OAuth slice, then implement access-token refresh integration and Vexa bot scheduling for `auto_join=true`.

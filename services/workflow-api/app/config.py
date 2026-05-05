@@ -27,6 +27,8 @@ class Settings:
     vexa_api_url: str
     vexa_api_key: str
     encryption_key: str
+    oauth_state_secret: str
+    public_base_url: str
     google_client_id: str
     google_client_secret: str
     microsoft_client_id: str
@@ -55,6 +57,8 @@ class Settings:
             vexa_api_url=os.getenv("VEXA_API_URL", "http://api-gateway:8000").rstrip("/"),
             vexa_api_key=os.getenv("VEXA_API_KEY", ""),
             encryption_key=os.getenv("WORKFLOW_ENCRYPTION_KEY", ""),
+            oauth_state_secret=os.getenv("WORKFLOW_OAUTH_STATE_SECRET", ""),
+            public_base_url=os.getenv("WORKFLOW_PUBLIC_BASE_URL", "http://localhost:8060").rstrip("/"),
             google_client_id=os.getenv("GOOGLE_CLIENT_ID", ""),
             google_client_secret=os.getenv("GOOGLE_CLIENT_SECRET", ""),
             microsoft_client_id=os.getenv("MICROSOFT_CLIENT_ID", ""),

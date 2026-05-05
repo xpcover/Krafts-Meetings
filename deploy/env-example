@@ -80,6 +80,8 @@ VEXA_API_KEY=
 # Set to a Fernet key before storing OAuth tokens.
 # Generate with: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
 WORKFLOW_ENCRYPTION_KEY=
+WORKFLOW_OAUTH_STATE_SECRET=
+WORKFLOW_PUBLIC_BASE_URL=http://localhost:8060
 WORKFLOW_INIT_DB_ON_STARTUP=true
 
 # Google Calendar OAuth

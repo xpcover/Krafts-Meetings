@@ -10,7 +10,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.calendar_clients import CalendarClient
 from app.crypto import TokenCipher
 from app.models import IntegrationAccount, WorkflowCalendarEvent
-from app.schemas import CalendarProvider, MeetingCreate, MeetingResponse
+from app.oauth import authorization_url, exchange_code, parse_state, token_expiry
+from app.schemas import CalendarProvider, MeetingCreate, MeetingResponse, OAuthCallbackResponse, OAuthStartResponse
 
 router = APIRouter(prefix="/workflow", tags=["Workflow"])
 
@@ -28,6 +29,12 @@ def _vexa_platform(provider: CalendarProvider) -> str:
     if provider == CalendarProvider.GOOGLE:
         return "google_meet"
     return "teams"
+
+
+def _oauth_configured(settings, provider: CalendarProvider) -> bool:
+    if provider == CalendarProvider.GOOGLE:
+        return bool(settings.google_client_id and settings.google_client_secret)
+    return bool(settings.microsoft_client_id and settings.microsoft_client_secret)
 
 
 def _serialize_event(event: WorkflowCalendarEvent) -> MeetingResponse:
@@ -120,3 +127,77 @@ async def list_meetings(user_id: int, db: Annotated[AsyncSession, Depends(get_db
         .order_by(WorkflowCalendarEvent.start_time.desc())
     )
     return [_serialize_event(event) for event in result.scalars().all()]
+
+
+@router.get("/oauth/{provider}/start", response_model=OAuthStartResponse)
+async def oauth_start(provider: CalendarProvider, user_id: int, request: Request):
+    settings = request.app.state.settings
+    if not settings.oauth_state_secret:
+        raise HTTPException(status_code=503, detail="WORKFLOW_OAUTH_STATE_SECRET is not configured")
+    if not _oauth_configured(settings, provider):
+        raise HTTPException(status_code=503, detail=f"{provider.value} OAuth client is not configured")
+    return OAuthStartResponse(
+        provider=provider,
+        authorization_url=authorization_url(settings, provider, user_id),
+    )
+
+
+@router.get("/oauth/{provider}/callback", response_model=OAuthCallbackResponse)
+async def oauth_callback(
+    provider: CalendarProvider,
+    code: str,
+    state: str,
+    request: Request,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    settings = request.app.state.settings
+    if not settings.encryption_key:
+        raise HTTPException(status_code=503, detail="WORKFLOW_ENCRYPTION_KEY is not configured")
+    try:
+        state_data = parse_state(settings.oauth_state_secret, state)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    if state_data["provider"] != provider.value:
+        raise HTTPException(status_code=400, detail="OAuth state provider mismatch")
+
+    token_response = await exchange_code(settings, provider, code, state_data["redirect_uri"])
+    access_token = token_response.get("access_token")
+    if not access_token:
+        raise HTTPException(status_code=502, detail="OAuth token response did not include access_token")
+
+    cipher = TokenCipher(settings.encryption_key)
+    values = {
+        "user_id": int(state_data["user_id"]),
+        "provider": provider.value,
+        "provider_account_id": token_response.get("sub") or "",
+        "encrypted_access_token": cipher.encrypt(access_token),
+        "token_expires_at": token_expiry(token_response),
+        "scopes": (token_response.get("scope") or "").split(),
+        "status": "connected",
+        "metadata": {"token_type": token_response.get("token_type")},
+    }
+    refresh_token = token_response.get("refresh_token")
+    if refresh_token:
+        values["encrypted_refresh_token"] = cipher.encrypt(refresh_token)
+
+    set_values = {
+        "encrypted_access_token": values["encrypted_access_token"],
+        "token_expires_at": values["token_expires_at"],
+        "scopes": values["scopes"],
+        "status": "connected",
+        "metadata": values["metadata"],
+    }
+    if "encrypted_refresh_token" in values:
+        set_values["encrypted_refresh_token"] = values["encrypted_refresh_token"]
+
+    stmt = (
+        pg_insert(IntegrationAccount)
+        .values(**values)
+        .on_conflict_do_update(
+            constraint="uq_integration_account_provider",
+            set_=set_values,
+        )
+    )
+    await db.execute(stmt)
+    await db.commit()
+    return OAuthCallbackResponse(provider=provider, user_id=int(state_data["user_id"]), status="connected")

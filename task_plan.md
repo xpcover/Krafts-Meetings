@@ -80,15 +80,16 @@ Status: in_progress
 
 Tasks:
 
-- Implement Google OAuth callback handling and token refresh.
-- Implement Microsoft Graph OAuth callback handling and token refresh.
-- Implement `POST /workflow/meetings`. Done for connected-account access-token flow; OAuth callback/token refresh endpoints remain pending.
+- Implement Google OAuth callback handling and token refresh. Callback handling done; refresh helper done; automatic refresh during provider calls pending.
+- Implement Microsoft Graph OAuth callback handling and token refresh. Callback handling done; refresh helper done; automatic refresh during provider calls pending.
+- Implement `POST /workflow/meetings`. Done for connected-account access-token flow; automatic refresh integration remains pending.
 - Implement `GET /workflow/meetings`. Done.
 - Create calendar events with video conferencing:
   - Google Calendar / Google Meet Done.
   - Outlook Calendar / Teams Done.
 - Store provider event IDs, meeting URLs, attendees, status, and timestamps. Done.
 - Add mocked tests for Google Calendar and Microsoft Graph APIs. Done.
+- Add OAuth state, authorization URL, and token exchange tests. Done.
 
 Acceptance:
 

@@ -23,6 +23,8 @@ This first slice provides the service skeleton, configuration, database connecti
 | `GET` | `/health` | Service health and database configuration status |
 | `POST` | `/workflow/meetings` | Create a Google Calendar or Outlook event with conferencing |
 | `GET` | `/workflow/meetings?user_id={id}` | List workflow-created/synced meetings for a user |
+| `GET` | `/workflow/oauth/{provider}/start?user_id={id}` | Generate a Google/Outlook OAuth authorization URL |
+| `GET` | `/workflow/oauth/{provider}/callback` | Exchange OAuth code and store encrypted provider tokens |
 
 `POST /workflow/meetings` currently accepts `user_id` in the request body. Cloudflare/Vexa identity header integration is planned for a later auth pass.
 
@@ -48,6 +50,8 @@ Workflow API stores its own state in namespaced/product tables. Vexa already has
 | `VEXA_API_URL` | `http://api-gateway:8000` | Internal Vexa API Gateway URL |
 | `VEXA_API_KEY` | empty | API key used for bot and transcript calls |
 | `WORKFLOW_ENCRYPTION_KEY` | empty | Required before OAuth token storage is implemented |
+| `WORKFLOW_OAUTH_STATE_SECRET` | empty | Signs OAuth callback state |
+| `WORKFLOW_PUBLIC_BASE_URL` | `http://localhost:8060` | Public callback base URL |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | empty | Google OAuth credentials |
 | `MICROSOFT_CLIENT_ID`, `MICROSOFT_CLIENT_SECRET`, `MICROSOFT_TENANT_ID` | empty / `common` | Microsoft Graph OAuth credentials |
 | `LOCAL_LLM_URL` | empty | Local LLM endpoint for task extraction |
