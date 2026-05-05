@@ -70,7 +70,16 @@
 - Added tests for native meeting ID parsing and `/bots` payloads.
 - Verification:
   - `/Library/Frameworks/Python.framework/Versions/3.13/bin/pytest services/workflow-api/tests -q` passed: `21 passed`.
+- Added Vexa meeting-completed webhook handling:
+  - verifies Vexa HMAC signature
+  - fetches transcript via API Gateway
+  - stores transcript metadata in `meeting_outputs`
+  - marks workflow event as `transcript_fetched`
+  - remains idempotent through `meeting_outputs.calendar_event_id` uniqueness
+- Added tests for webhook signature verification and transcript fetch client calls.
+- Verification:
+  - `/Library/Frameworks/Python.framework/Versions/3.13/bin/pytest services/workflow-api/tests -q` passed: `26 passed`.
 
 ## Current Next Step
 
-Commit and push Vexa scheduling slice, then implement transcript retrieval and Vexa completion webhook handling.
+Commit and push transcript webhook slice, then start Phase 5 local LLM task extraction.

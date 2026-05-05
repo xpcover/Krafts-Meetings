@@ -44,6 +44,23 @@ class VexaClient:
         response = await self._post("/bots", json=payload)
         return ScheduledBot(platform=platform, native_meeting_id=native_id, response=response.json())
 
+    async def get_transcript(self, platform: str, native_id: str) -> dict[str, Any]:
+        response = await self._get(f"/transcripts/{platform}/{native_id}")
+        return response.json()
+
+    async def _get(self, path: str, **kwargs) -> httpx.Response:
+        headers = kwargs.pop("headers", {})
+        headers["X-API-Key"] = self.api_key
+        url = f"{self.base_url}{path}"
+
+        if self._client is not None:
+            response = await self._client.get(url, headers=headers, **kwargs)
+        else:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.get(url, headers=headers, **kwargs)
+        response.raise_for_status()
+        return response
+
     async def _post(self, path: str, **kwargs) -> httpx.Response:
         headers = kwargs.pop("headers", {})
         headers["X-API-Key"] = self.api_key

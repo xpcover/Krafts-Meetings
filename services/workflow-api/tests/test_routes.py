@@ -13,3 +13,9 @@ def test_workflow_oauth_routes_exist():
 
     assert ("/workflow/oauth/{provider}/start", ("GET", "HEAD")) in routes or ("/workflow/oauth/{provider}/start", ("GET",)) in routes
     assert ("/workflow/oauth/{provider}/callback", ("GET", "HEAD")) in routes or ("/workflow/oauth/{provider}/callback", ("GET",)) in routes
+
+
+def test_workflow_vexa_webhook_route_exists():
+    routes = {(route.path, tuple(sorted(route.methods or []))) for route in app.routes if hasattr(route, "path")}
+
+    assert ("/workflow/webhooks/vexa/meeting-completed", ("POST",)) in routes

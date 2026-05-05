@@ -22,6 +22,7 @@ def _settings() -> Settings:
         db_ssl_mode="disable",
         vexa_api_url="http://api-gateway:8000",
         vexa_api_key="",
+        vexa_webhook_secret="",
         encryption_key="fernet-key-placeholder",
         oauth_state_secret="state-secret",
         public_base_url="https://meetings.example.com",

@@ -28,6 +28,8 @@
 - OAuth state is signed with HMAC instead of persisted in a DB table.
 - `workflow-api` now schedules Vexa bots through API Gateway `/bots` when `auto_join=true` and `VEXA_API_KEY` is configured.
 - If `auto_join=true` but `VEXA_API_KEY` is missing, meeting creation still succeeds with sync status `created_bot_not_configured`.
+- Vexa webhook verification matches upstream `X-Webhook-Signature` format: HMAC-SHA256 over `timestamp.body`.
+- Meeting-completed webhook processing stores transcript metadata only, not transcript body text.
 - Local shell has Docker CLI `29.4.0`, but `docker compose` plugin and `docker-compose` binary are unavailable.
 
 ## Architecture Findings
@@ -46,4 +48,4 @@
 - Which SMTP provider/server will be used for first real verification?
 - Should Docker Compose plugin installation be handled on this machine, or should compose validation run on the target VM?
 - OAuth start/callback endpoints now exist; automatic access-token refresh before provider calls is still pending.
-- Transcript retrieval and Vexa completion webhook processing are still pending.
+- Local LLM summary/task generation after transcript fetch is still pending.

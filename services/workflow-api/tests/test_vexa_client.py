@@ -43,3 +43,25 @@ def test_schedule_bot_posts_expected_payload():
     }
     assert scheduled.native_meeting_id == "abc-defg-hij"
     assert scheduled.response["id"] == 123
+
+
+def test_get_transcript_uses_vexa_transcript_endpoint():
+    captured = {}
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        captured["url"] = str(request.url)
+        captured["api_key"] = request.headers.get("x-api-key")
+        return httpx.Response(200, json={"segments": [{"text": "hello"}]})
+
+    async def run():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as http_client:
+            return await VexaClient("http://api-gateway:8000", "vxa-test", http_client).get_transcript(
+                "google_meet",
+                "abc-defg-hij",
+            )
+
+    transcript = asyncio.run(run())
+
+    assert captured["url"] == "http://api-gateway:8000/transcripts/google_meet/abc-defg-hij"
+    assert captured["api_key"] == "vxa-test"
+    assert transcript["segments"] == [{"text": "hello"}]

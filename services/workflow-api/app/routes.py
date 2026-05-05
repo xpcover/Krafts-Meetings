@@ -9,10 +9,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.calendar_clients import CalendarClient
 from app.crypto import TokenCipher
-from app.models import IntegrationAccount, WorkflowCalendarEvent
+from app.models import IntegrationAccount, MeetingOutput, WorkflowCalendarEvent
 from app.oauth import authorization_url, exchange_code, parse_state, token_expiry
 from app.schemas import CalendarProvider, MeetingCreate, MeetingResponse, OAuthCallbackResponse, OAuthStartResponse
 from app.vexa_client import VexaClient
+from app.webhook_security import verify_vexa_signature
 
 router = APIRouter(prefix="/workflow", tags=["Workflow"])
 
@@ -227,3 +228,78 @@ async def oauth_callback(
     await db.execute(stmt)
     await db.commit()
     return OAuthCallbackResponse(provider=provider, user_id=int(state_data["user_id"]), status="connected")
+
+
+@router.post("/webhooks/vexa/meeting-completed")
+async def vexa_meeting_completed(
+    payload: dict,
+    request: Request,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    vexa_client: Annotated[VexaClient | None, Depends(get_vexa_client)],
+):
+    settings = request.app.state.settings
+    if not settings.vexa_webhook_secret:
+        raise HTTPException(status_code=503, detail="WORKFLOW_VEXA_WEBHOOK_SECRET is not configured")
+
+    body = await request.body()
+    if not verify_vexa_signature(
+        body,
+        settings.vexa_webhook_secret,
+        request.headers.get("x-webhook-signature"),
+        request.headers.get("x-webhook-timestamp"),
+    ):
+        raise HTTPException(status_code=401, detail="Invalid Vexa webhook signature")
+
+    if payload.get("event_type") != "meeting.completed":
+        raise HTTPException(status_code=400, detail="Unsupported Vexa webhook event")
+    meeting = (payload.get("data") or {}).get("meeting") or {}
+    platform = meeting.get("platform")
+    native_id = meeting.get("native_meeting_id")
+    if not platform or not native_id:
+        raise HTTPException(status_code=400, detail="Missing meeting platform/native_meeting_id")
+    if vexa_client is None:
+        raise HTTPException(status_code=503, detail="VEXA_API_KEY is not configured")
+
+    event = (
+        await db.execute(
+            select(WorkflowCalendarEvent).where(
+                WorkflowCalendarEvent.vexa_platform == platform,
+                WorkflowCalendarEvent.vexa_meeting_id == native_id,
+            )
+        )
+    ).scalars().first()
+    if not event:
+        raise HTTPException(status_code=404, detail="Workflow calendar event not found for Vexa meeting")
+
+    transcript = await vexa_client.get_transcript(platform, native_id)
+    segments = transcript.get("segments") or []
+    transcript_ref = {
+        "source": "vexa",
+        "platform": platform,
+        "native_meeting_id": native_id,
+        "segment_count": len(segments),
+    }
+    stmt = (
+        pg_insert(MeetingOutput)
+        .values(
+            calendar_event_id=event.id,
+            vexa_platform=platform,
+            vexa_meeting_id=native_id,
+            transcript_ref=transcript_ref,
+            generation_status="transcript_fetched",
+        )
+        .on_conflict_do_update(
+            constraint="uq_meeting_outputs_calendar_event",
+            set_={
+                "vexa_platform": platform,
+                "vexa_meeting_id": native_id,
+                "transcript_ref": transcript_ref,
+                "generation_status": "transcript_fetched",
+                "error_message": None,
+            },
+        )
+    )
+    await db.execute(stmt)
+    event.sync_status = "transcript_fetched"
+    await db.commit()
+    return {"status": "transcript_fetched", "calendar_event_id": event.id, "segment_count": len(segments)}

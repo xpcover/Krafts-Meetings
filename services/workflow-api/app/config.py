@@ -26,6 +26,7 @@ class Settings:
     db_ssl_mode: str
     vexa_api_url: str
     vexa_api_key: str
+    vexa_webhook_secret: str
     encryption_key: str
     oauth_state_secret: str
     public_base_url: str
@@ -56,6 +57,7 @@ class Settings:
             db_ssl_mode=os.getenv("DB_SSL_MODE", "prefer"),
             vexa_api_url=os.getenv("VEXA_API_URL", "http://api-gateway:8000").rstrip("/"),
             vexa_api_key=os.getenv("VEXA_API_KEY", ""),
+            vexa_webhook_secret=os.getenv("WORKFLOW_VEXA_WEBHOOK_SECRET", ""),
             encryption_key=os.getenv("WORKFLOW_ENCRYPTION_KEY", ""),
             oauth_state_secret=os.getenv("WORKFLOW_OAUTH_STATE_SECRET", ""),
             public_base_url=os.getenv("WORKFLOW_PUBLIC_BASE_URL", "http://localhost:8060").rstrip("/"),
