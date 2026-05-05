@@ -19,8 +19,8 @@ async def lifespan(app: FastAPI):
     app.state.settings = settings
     app.state.database = database
     if settings.init_db_on_startup:
-        logger.info("Validating workflow-api database connectivity")
-        await database.ping()
+        logger.info("Initializing workflow-api database schema")
+        await database.init_schema()
     try:
         yield
     finally:

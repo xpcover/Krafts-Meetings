@@ -24,6 +24,18 @@ This first slice provides the service skeleton, configuration, database connecti
 
 Planned public workflow endpoints are tracked in the root `task_plan.md`.
 
+## Tables
+
+Workflow API stores its own state in namespaced/product tables. Vexa already has a `calendar_events` table, so the workflow calendar table is named `workflow_calendar_events` to avoid schema collisions.
+
+| Table | Purpose |
+| --- | --- |
+| `integration_accounts` | Encrypted Google/Microsoft OAuth account state |
+| `workflow_calendar_events` | Provider calendar events and Vexa meeting references |
+| `meeting_outputs` | Transcript references, summaries, decisions, generation status |
+| `tasks` | Assigned action items extracted from meeting transcripts |
+| `email_deliveries` | SMTP delivery attempts and responses |
+
 ## Configuration
 
 | Variable | Default | Description |

@@ -17,6 +17,8 @@
 - Vexa has post-meeting/webhook infrastructure that can trigger workflow processing.
 - Added `services/workflow-api` as the new service root for Krafts Meetings orchestration.
 - `workflow-api` uses an isolated config/database layer instead of importing `meeting_api.database` or `admin_models.database` because those modules validate DB env at import time.
+- Vexa already owns a `calendar_events` table, so workflow calendar state uses `workflow_calendar_events`.
+- Workflow schema convergence uses the repo's `libs/schema-sync` package.
 - Local shell has Docker CLI `29.4.0`, but `docker compose` plugin and `docker-compose` binary are unavailable.
 
 ## Architecture Findings

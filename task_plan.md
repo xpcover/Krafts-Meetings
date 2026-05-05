@@ -53,20 +53,20 @@ Acceptance:
 
 ### Phase 2: Workflow Data Model
 
-Status: pending
+Status: in_progress
 
 Tasks:
 
 - Add tables:
-  - `integration_accounts`
-  - `calendar_events`
-  - `meeting_outputs`
-  - `tasks`
-  - `email_deliveries`
-- Add idempotency keys for provider events and Vexa webhook processing.
-- Add encrypted token storage for OAuth refresh/access tokens.
-- Add schema initialization or migration path consistent with the repo's current DB approach.
-- Add tests for model creation, uniqueness, and encrypted token round trips.
+  - `integration_accounts` Done.
+  - `workflow_calendar_events` Done. Note: namespaced because Vexa already owns `calendar_events`.
+  - `meeting_outputs` Done.
+  - `tasks` Done.
+  - `email_deliveries` Done.
+- Add idempotency keys for provider events and Vexa webhook processing. Done via uniqueness constraints on integration accounts, provider events, and meeting outputs.
+- Add encrypted token storage for OAuth refresh/access tokens. Done via `TokenCipher`; endpoint usage comes in Phase 3.
+- Add schema initialization or migration path consistent with the repo's current DB approach. Done via `schema_sync.ensure_schema`.
+- Add tests for model creation, uniqueness, and encrypted token round trips. Done.
 
 Acceptance:
 

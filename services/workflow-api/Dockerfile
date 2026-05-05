@@ -2,6 +2,9 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
+COPY libs/schema-sync /app/libs/schema-sync
+RUN pip install --no-cache-dir /app/libs/schema-sync
+
 COPY services/workflow-api/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 

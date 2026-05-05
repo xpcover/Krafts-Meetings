@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engin
 from sqlalchemy.orm import sessionmaker
 
 from app.config import Settings
+from app.models import Base
 
 
 def _asyncpg_ssl(settings: Settings):
@@ -62,6 +63,13 @@ class Database:
         assert self.engine is not None
         async with self.engine.connect() as conn:
             await conn.execute(text("SELECT 1"))
+
+    async def init_schema(self) -> None:
+        self.configure()
+        assert self.engine is not None
+        from schema_sync import ensure_schema
+
+        await ensure_schema(self.engine, Base)
 
     async def close(self) -> None:
         if self.engine is not None:

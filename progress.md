@@ -36,7 +36,18 @@
 - Verification:
   - `/Library/Frameworks/Python.framework/Versions/3.13/bin/pytest services/workflow-api/tests -q` passed: `3 passed`.
   - Docker compose config validation could not run because this Docker CLI lacks the compose plugin and `docker-compose` is not installed.
+- Continued Phase 2 data model work.
+- Added workflow models and schema sync:
+  - `integration_accounts`
+  - `workflow_calendar_events`
+  - `meeting_outputs`
+  - `tasks`
+  - `email_deliveries`
+- Added Fernet-based `TokenCipher` for encrypted OAuth token storage.
+- Added model and crypto tests.
+- Verification:
+  - `/Library/Frameworks/Python.framework/Versions/3.13/bin/pytest services/workflow-api/tests -q` passed: `10 passed`.
 
 ## Current Next Step
 
-Commit and push the workflow-api skeleton, then proceed to Phase 2 data models.
+Commit and push the Phase 2 model/encryption slice, then proceed to Phase 3 calendar API scaffolding.
