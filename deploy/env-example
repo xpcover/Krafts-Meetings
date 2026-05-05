@@ -19,6 +19,7 @@ ADMIN_API_PORT=8057
 RUNTIME_API_PORT=8090
 AGENT_API_PORT=8100
 CALENDAR_SERVICE_PORT=8050
+WORKFLOW_API_PORT=8060
 DASHBOARD_HOST_PORT=3001
 POSTGRES_HOST_PORT=5458
 MCP_HOST_PORT=18888
@@ -67,3 +68,40 @@ CLAUDE_JSON_PATH=
 
 # Billing hooks (optional — for hosted service)
 # POST_MEETING_HOOKS=https://your-billing-webhook
+
+# ============================================================================
+# Krafts Meetings Workflow API — calendar, task extraction, SMTP, Cloudflare edge
+# ============================================================================
+
+# Internal Vexa gateway used by workflow-api for bot scheduling/transcripts
+VEXA_API_URL=http://api-gateway:8000
+VEXA_API_KEY=
+
+# Set to a Fernet key before storing OAuth tokens.
+# Generate with: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+WORKFLOW_ENCRYPTION_KEY=
+WORKFLOW_INIT_DB_ON_STARTUP=true
+
+# Google Calendar OAuth
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+
+# Microsoft Graph / Outlook OAuth
+MICROSOFT_CLIENT_ID=
+MICROSOFT_CLIENT_SECRET=
+MICROSOFT_TENANT_ID=common
+
+# Local LLM endpoint for post-meeting task extraction
+LOCAL_LLM_URL=http://localhost:11434
+
+# SMTP delivery
+SMTP_HOST=
+SMTP_PORT=587
+SMTP_USERNAME=
+SMTP_PASSWORD=
+SMTP_FROM_EMAIL=
+SMTP_TLS_MODE=starttls
+
+# Cloudflare edge/control-plane integration
+CLOUDFLARE_TUNNEL_TOKEN=
+CLOUDFLARE_WORKER_SHARED_SECRET=

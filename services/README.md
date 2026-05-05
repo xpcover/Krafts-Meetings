@@ -73,6 +73,7 @@ Vexa is a dozen services, not a monolith. Each service owns one concern (transcr
 | [admin-api](admin-api/) | 8001 | User management, API tokens, meeting CRUD |
 | [agent-api](agent-api/) | 8100 | Chat sessions, TTS, scheduling (in-process worker), workspaces. |
 | [runtime-api](runtime-api/) | 8090 | Container lifecycle API — Docker, K8s, process backends. |
+| [workflow-api](workflow-api/) | 8060 | Krafts Meetings workflow layer: calendars, tasks, SMTP, Vexa orchestration |
 
 ### Domain Services
 
@@ -121,6 +122,10 @@ The scheduler is not a standalone service — it runs as an in-process worker in
 **Flow:** Calendar Service syncs events → Agent API scheduler queues timed job → job fires → API Gateway → Meeting API spawns bot.
 
 **Code:** `services/runtime-api/runtime_api/scheduler.py` + `scheduler_api.py` (moved from shared-models)
+
+### Krafts Meetings Workflow
+
+The `workflow-api` service is the product workflow layer for the `xpcover/Krafts-Meetings` fork. It is intentionally separate from `vexa-bot`: calendar OAuth, Google/Outlook meeting creation, transcript-driven task extraction, local LLM calls, and SMTP delivery live there while Vexa continues to own meeting bot execution and transcription.
 
 ## Infrastructure Dependencies
 

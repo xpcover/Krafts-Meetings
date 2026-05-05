@@ -15,6 +15,9 @@
 - Vexa compose documentation states that bots spawn as Docker containers and the stack uses Postgres, Redis, and MinIO.
 - Vexa has API Gateway routes for bots and transcripts that `workflow-api` can call.
 - Vexa has post-meeting/webhook infrastructure that can trigger workflow processing.
+- Added `services/workflow-api` as the new service root for Krafts Meetings orchestration.
+- `workflow-api` uses an isolated config/database layer instead of importing `meeting_api.database` or `admin_models.database` because those modules validate DB env at import time.
+- Local shell has Docker CLI `29.4.0`, but `docker compose` plugin and `docker-compose` binary are unavailable.
 
 ## Architecture Findings
 
@@ -30,3 +33,4 @@
 - Should the dashboard be extended in Vexa, or should v1 expose workflow APIs only?
 - Which local LLM API shape should be targeted first: OpenAI-compatible, Ollama, or another internal endpoint?
 - Which SMTP provider/server will be used for first real verification?
+- Should Docker Compose plugin installation be handled on this machine, or should compose validation run on the target VM?

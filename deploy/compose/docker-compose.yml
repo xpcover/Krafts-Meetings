@@ -387,6 +387,54 @@ services:
       - vexa
     restart: unless-stopped
 
+  workflow-api:
+    build:
+      context: ../..
+      dockerfile: services/workflow-api/Dockerfile
+    image: vexaai/workflow-api:${IMAGE_TAG}
+    mem_limit: 512m
+    ports:
+      - "127.0.0.1:${WORKFLOW_API_PORT:-8060}:8060"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME:-vexa}
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-postgres}
+      - DB_SSL_MODE=disable
+      - WORKFLOW_INIT_DB_ON_STARTUP=${WORKFLOW_INIT_DB_ON_STARTUP:-true}
+      - WORKFLOW_ENCRYPTION_KEY=${WORKFLOW_ENCRYPTION_KEY:-}
+      - VEXA_API_URL=${VEXA_API_URL:-http://api-gateway:8000}
+      - VEXA_API_KEY=${VEXA_API_KEY:-}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
+      - MICROSOFT_CLIENT_ID=${MICROSOFT_CLIENT_ID:-}
+      - MICROSOFT_CLIENT_SECRET=${MICROSOFT_CLIENT_SECRET:-}
+      - MICROSOFT_TENANT_ID=${MICROSOFT_TENANT_ID:-common}
+      - LOCAL_LLM_URL=${LOCAL_LLM_URL:-}
+      - SMTP_HOST=${SMTP_HOST:-}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USERNAME=${SMTP_USERNAME:-}
+      - SMTP_PASSWORD=${SMTP_PASSWORD:-}
+      - SMTP_FROM_EMAIL=${SMTP_FROM_EMAIL:-}
+      - SMTP_TLS_MODE=${SMTP_TLS_MODE:-starttls}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8060/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    init: true
+    depends_on:
+      postgres:
+        condition: service_healthy
+      api-gateway:
+        condition: service_started
+    networks:
+      - vexa
+    restart: unless-stopped
+
   # calendar-service: NO-SHIP for 0.10 — not included in release
   # calendar-service:
   #   build:

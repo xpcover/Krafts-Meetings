@@ -6,10 +6,10 @@ Implement the saved architecture in `cloudflare-vexa-meeting-assistant-plan.md`:
 
 ## Current Status
 
-- Overall status: planning
+- Overall status: implementation_started
 - Architecture plan: complete
 - Implementation task list: in progress
-- Code implementation: not started
+- Code implementation: started
 - GitHub implementation repo: `xpcover/Krafts-Meetings`
 
 ## Phases
@@ -22,9 +22,9 @@ Tasks:
 
 - Confirm whether implementation should happen in the cloned `vexa-review` tree or a clean fork/worktree. Done: implementation target is the `xpcover/Krafts-Meetings` fork, currently checked out locally at `vexa-review`.
 - Decide package layout for new `workflow-api` service and Cloudflare Worker.
-- Verify current Vexa compose stack assumptions: Postgres, Redis, MinIO, API Gateway, Meeting API, Runtime API.
-- Identify existing shared model/database utilities that can be reused safely.
-- Produce initial `.env.example` additions for workflow, OAuth, SMTP, LLM, and Cloudflare tunnel settings.
+- Verify current Vexa compose stack assumptions: Postgres, Redis, MinIO, API Gateway, Meeting API, Runtime API. Done: compose includes those services and `workflow-api` is wired to Postgres/API Gateway.
+- Identify existing shared model/database utilities that can be reused safely. Done: workflow-api uses its own config/database layer to avoid import-time env validation from Vexa DB modules.
+- Produce initial `.env.example` additions for workflow, OAuth, SMTP, LLM, and Cloudflare tunnel settings. Done.
 
 Acceptance:
 
@@ -34,16 +34,16 @@ Acceptance:
 
 ### Phase 1: Workflow API Skeleton
 
-Status: pending
+Status: in_progress
 
 Tasks:
 
-- Add `services/workflow-api` as a FastAPI service.
-- Add health endpoint: `GET /health`.
-- Add config loading and validation.
-- Add async DB connection using the same Postgres instance as Vexa.
-- Add initial Dockerfile and compose service entry.
-- Add minimal tests for app startup, health, and config validation.
+- Add `services/workflow-api` as a FastAPI service. Done.
+- Add health endpoint: `GET /health`. Done.
+- Add config loading and validation. Done.
+- Add async DB connection using the same Postgres instance as Vexa. Done.
+- Add initial Dockerfile and compose service entry. Done.
+- Add minimal tests for app startup, health, and config validation. Done.
 
 Acceptance:
 
@@ -223,4 +223,6 @@ Acceptance:
 
 | Date | Error | Attempt | Resolution |
 | --- | --- | --- | --- |
-| 2026-05-05 | None yet | N/A | N/A |
+| 2026-05-05 | `python` command not found | Ran focused workflow-api tests with `python -m pytest` | Retried with available pytest binary |
+| 2026-05-05 | `python3 -m pytest` had no pytest installed | Ran focused workflow-api tests with `python3 -m pytest` | Used `/Library/Frameworks/Python.framework/Versions/3.13/bin/pytest`; tests passed |
+| 2026-05-05 | `docker compose` plugin unavailable (`unknown shorthand flag: 'f'`) | Tried compose config validation | Docker compose validation pending until compose plugin or legacy binary is installed |
