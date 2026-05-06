@@ -94,8 +94,15 @@ MICROSOFT_CLIENT_ID=
 MICROSOFT_CLIENT_SECRET=
 MICROSOFT_TENANT_ID=common
 
-# Local LLM endpoint for post-meeting task extraction
-LOCAL_LLM_URL=http://localhost:11434
+# AI extraction provider for post-meeting summaries/tasks.
+# Fast launch default uses OpenAI Responses API. Local providers can be added later.
+LLM_PROVIDER=openai
+OPENAI_API_KEY=
+OPENAI_MODEL=gpt-5-nano
+OPENAI_BASE_URL=https://api.openai.com/v1
+
+# Reserved for later local LLM fallback.
+LOCAL_LLM_URL=
 
 # SMTP delivery
 SMTP_HOST=

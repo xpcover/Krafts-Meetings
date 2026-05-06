@@ -11,7 +11,7 @@ FastAPI service for the Cloudflare-fronted control plane. In v1 it will own:
 - Google Calendar and Microsoft Graph OAuth/token storage
 - calendar meeting creation and sync
 - Vexa bot scheduling and transcript retrieval
-- post-meeting summary and task extraction via a local LLM
+- post-meeting summary and task extraction via OpenAI API for fast launch
 - SMTP summary/task delivery
 
 This first slice provides the service skeleton, configuration, database connectivity helpers, Docker image, compose wiring, and tests.
@@ -25,7 +25,7 @@ This first slice provides the service skeleton, configuration, database connecti
 | `GET` | `/workflow/meetings?user_id={id}` | List workflow-created/synced meetings for a user |
 | `GET` | `/workflow/oauth/{provider}/start?user_id={id}` | Generate a Google/Outlook OAuth authorization URL |
 | `GET` | `/workflow/oauth/{provider}/callback` | Exchange OAuth code and store encrypted provider tokens |
-| `POST` | `/workflow/webhooks/vexa/meeting-completed` | Verify Vexa webhook, fetch transcript metadata, and mark meeting output |
+| `POST` | `/workflow/webhooks/vexa/meeting-completed` | Verify Vexa webhook, fetch transcript, extract summary/tasks when OpenAI is configured, and mark meeting output |
 
 `POST /workflow/meetings` currently accepts `user_id` in the request body. Cloudflare/Vexa identity header integration is planned for a later auth pass.
 
@@ -56,7 +56,11 @@ Workflow API stores its own state in namespaced/product tables. Vexa already has
 | `WORKFLOW_VEXA_WEBHOOK_SECRET` | empty | Verifies Vexa meeting-completed webhooks |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | empty | Google OAuth credentials |
 | `MICROSOFT_CLIENT_ID`, `MICROSOFT_CLIENT_SECRET`, `MICROSOFT_TENANT_ID` | empty / `common` | Microsoft Graph OAuth credentials |
-| `LOCAL_LLM_URL` | empty | Local LLM endpoint for task extraction |
+| `LLM_PROVIDER` | `openai` | Post-meeting extraction provider |
+| `OPENAI_API_KEY` | empty | OpenAI API key for fast-launch summary/task extraction |
+| `OPENAI_MODEL` | `gpt-5-nano` | OpenAI model used with the Responses API |
+| `OPENAI_BASE_URL` | `https://api.openai.com/v1` | OpenAI-compatible API base URL |
+| `LOCAL_LLM_URL` | empty | Reserved for a later local LLM fallback |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM_EMAIL`, `SMTP_TLS_MODE` | empty / defaults | SMTP delivery configuration |
 
 ## Run
@@ -81,4 +85,5 @@ pytest tests -q
 | 2 | service can build as a Docker image | implemented |
 | 3 | compose wires service to Postgres and Vexa gateway | implemented |
 | 4 | DB ping helper exists and can be enabled on startup | implemented |
-| 5 | OAuth/calendar/task/SMTP workflows | pending later phases |
+| 5 | OAuth/calendar/task workflows | implemented |
+| 6 | SMTP workflows | pending later phases |

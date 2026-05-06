@@ -68,3 +68,17 @@ class OAuthCallbackResponse(BaseModel):
     provider: CalendarProvider
     user_id: int
     status: str
+
+
+class ExtractedTask(BaseModel):
+    title: str = Field(..., min_length=1)
+    owner_email: Optional[EmailStr] = None
+    due_at: Optional[datetime] = None
+    description: Optional[str] = None
+    confidence: float = Field(default=0.5, ge=0.0, le=1.0)
+
+
+class MeetingExtraction(BaseModel):
+    summary: str = ""
+    decisions: list[str] = Field(default_factory=list)
+    tasks: list[ExtractedTask] = Field(default_factory=list)

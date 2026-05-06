@@ -1,7 +1,9 @@
 """Workflow API routes."""
 
+from datetime import UTC, datetime
 from typing import Annotated
 
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -9,7 +11,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.calendar_clients import CalendarClient
 from app.crypto import TokenCipher
-from app.models import IntegrationAccount, MeetingOutput, WorkflowCalendarEvent
+from app.llm_client import OpenAIExtractionClient
+from app.models import IntegrationAccount, MeetingOutput, WorkflowCalendarEvent, WorkflowTask
 from app.oauth import authorization_url, exchange_code, parse_state, token_expiry
 from app.schemas import CalendarProvider, MeetingCreate, MeetingResponse, OAuthCallbackResponse, OAuthStartResponse
 from app.vexa_client import VexaClient
@@ -32,6 +35,13 @@ def get_vexa_client(request: Request) -> VexaClient | None:
     if not settings.vexa_api_key:
         return None
     return VexaClient(settings.vexa_api_url, settings.vexa_api_key)
+
+
+def get_extraction_client(request: Request) -> OpenAIExtractionClient | None:
+    settings = request.app.state.settings
+    if settings.llm_provider != "openai" or not settings.openai_api_key:
+        return None
+    return OpenAIExtractionClient(settings)
 
 
 def _vexa_platform(provider: CalendarProvider) -> str:
@@ -236,6 +246,7 @@ async def vexa_meeting_completed(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
     vexa_client: Annotated[VexaClient | None, Depends(get_vexa_client)],
+    extraction_client: Annotated[OpenAIExtractionClient | None, Depends(get_extraction_client)],
 ):
     settings = request.app.state.settings
     if not settings.vexa_webhook_secret:
@@ -279,6 +290,20 @@ async def vexa_meeting_completed(
         "native_meeting_id": native_id,
         "segment_count": len(segments),
     }
+    extraction = None
+    generation_status = "transcript_fetched"
+    error_message = None
+    if extraction_client is None:
+        generation_status = "llm_not_configured"
+    else:
+        try:
+            extraction = await extraction_client.extract(transcript)
+            generation_status = "extracted"
+        except (ValueError, httpx.HTTPError) as exc:
+            generation_status = "extraction_failed"
+            error_message = str(exc)
+    generated_at = datetime.now(UTC) if extraction else None
+
     stmt = (
         pg_insert(MeetingOutput)
         .values(
@@ -286,7 +311,11 @@ async def vexa_meeting_completed(
             vexa_platform=platform,
             vexa_meeting_id=native_id,
             transcript_ref=transcript_ref,
-            generation_status="transcript_fetched",
+            summary=extraction.summary if extraction else None,
+            decisions=extraction.decisions if extraction else [],
+            generation_status=generation_status,
+            generated_at=generated_at,
+            error_message=error_message,
         )
         .on_conflict_do_update(
             constraint="uq_meeting_outputs_calendar_event",
@@ -294,12 +323,40 @@ async def vexa_meeting_completed(
                 "vexa_platform": platform,
                 "vexa_meeting_id": native_id,
                 "transcript_ref": transcript_ref,
-                "generation_status": "transcript_fetched",
-                "error_message": None,
+                "summary": extraction.summary if extraction else None,
+                "decisions": extraction.decisions if extraction else [],
+                "generation_status": generation_status,
+                "generated_at": generated_at,
+                "error_message": error_message,
             },
         )
     )
     await db.execute(stmt)
-    event.sync_status = "transcript_fetched"
+    if extraction:
+        # Idempotent enough for v1 webhook retries: replace tasks for this event with
+        # the latest extraction output before inserting the current set.
+        existing_tasks = (
+            await db.execute(select(WorkflowTask).where(WorkflowTask.calendar_event_id == event.id))
+        ).scalars().all()
+        for task in existing_tasks:
+            await db.delete(task)
+        for task in extraction.tasks:
+            db.add(WorkflowTask(
+                calendar_event_id=event.id,
+                owner_email=str(task.owner_email) if task.owner_email else None,
+                title=task.title,
+                description=task.description,
+                due_at=task.due_at,
+                status="open",
+                confidence=task.confidence,
+                source={"provider": "openai", "model": settings.openai_model},
+            ))
+
+    event.sync_status = generation_status
     await db.commit()
-    return {"status": "transcript_fetched", "calendar_event_id": event.id, "segment_count": len(segments)}
+    return {
+        "status": generation_status,
+        "calendar_event_id": event.id,
+        "segment_count": len(segments),
+        "task_count": len(extraction.tasks) if extraction else 0,
+    }

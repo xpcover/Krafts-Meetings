@@ -35,6 +35,10 @@ class Settings:
     microsoft_client_id: str
     microsoft_client_secret: str
     microsoft_tenant_id: str
+    llm_provider: str
+    openai_api_key: str
+    openai_model: str
+    openai_base_url: str
     local_llm_url: str
     smtp_host: str
     smtp_port: int
@@ -66,6 +70,10 @@ class Settings:
             microsoft_client_id=os.getenv("MICROSOFT_CLIENT_ID", ""),
             microsoft_client_secret=os.getenv("MICROSOFT_CLIENT_SECRET", ""),
             microsoft_tenant_id=os.getenv("MICROSOFT_TENANT_ID", "common"),
+            llm_provider=os.getenv("LLM_PROVIDER", "openai").lower(),
+            openai_api_key=os.getenv("OPENAI_API_KEY", ""),
+            openai_model=os.getenv("OPENAI_MODEL", "gpt-5-nano"),
+            openai_base_url=os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1").rstrip("/"),
             local_llm_url=os.getenv("LOCAL_LLM_URL", "").rstrip("/"),
             smtp_host=os.getenv("SMTP_HOST", ""),
             smtp_port=int(os.getenv("SMTP_PORT", "587")),

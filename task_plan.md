@@ -117,25 +117,26 @@ Acceptance:
 - Meeting completion webhook fetches transcript exactly once per Vexa meeting.
 - Duplicate webhooks do not duplicate outputs, tasks, or emails.
 
-### Phase 5: Local LLM Task Extraction
+### Phase 5: OpenAI Task Extraction
 
-Status: pending
+Status: in_progress
 
 Tasks:
 
-- Add configurable local LLM endpoint client.
-- Define extraction output shape: summary, decisions, tasks.
-- Add transcript-to-task prompt/template with strict JSON response.
-- Add deterministic parser and validation for LLM output.
-- Store summaries in `meeting_outputs`.
-- Store action items in `tasks`.
-- Add fixture tests for transcript parsing and malformed LLM responses.
+- Add configurable OpenAI Responses API client. Done.
+- Define extraction output shape: summary, decisions, tasks. Done.
+- Add transcript-to-task prompt/template with strict JSON schema response. Done.
+- Add deterministic parser and validation for model output. Done.
+- Store summaries in `meeting_outputs`. Done.
+- Store action items in `tasks`. Done.
+- Add fixture tests for transcript parsing and malformed model responses. Done.
+- Defer local LLM endpoint fallback until after fast-launch OpenAI path is stable.
 
 Acceptance:
 
 - A completed meeting produces one summary and zero or more tasks.
 - Malformed LLM responses fail safely and are recorded for retry/debugging.
-- No transcript text is sent outside the self-managed execution plane.
+- Transcript text is sent to OpenAI only when `LLM_PROVIDER=openai` and `OPENAI_API_KEY` are configured.
 
 ### Phase 6: SMTP Delivery
 
@@ -217,6 +218,7 @@ Acceptance:
 - Cloudflare Containers are not the Vexa runtime target in v1.
 - Vexa bot code should not be modified for calendar, task, or email logic.
 - Durable transcript/task/token data must stay on the self-managed VM.
+- Fast launch uses OpenAI API for summary/task extraction; local LLM fallback is deferred.
 - Google Calendar and Microsoft Graph are external trust boundaries by design.
 - SMTP must be configurable and testable without leaking transcript contents.
 

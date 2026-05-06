@@ -2,7 +2,7 @@
 
 ## Summary
 
-Build a Cloudflare-fronted, self-hosted Vexa product for transcription, Google/Outlook calendar meeting creation, task extraction, and SMTP mail. Cloudflare is the control/edge plane; Vexa, Postgres, Redis, transcription, LLM inference, SMTP delivery, and durable app state run on a self-managed VM. Supabase is not used in v1.
+Build a Cloudflare-fronted, self-hosted Vexa product for transcription, Google/Outlook calendar meeting creation, task extraction, and SMTP mail. Cloudflare is the control/edge plane; Vexa, Postgres, Redis, transcription, SMTP delivery, and durable app state run on a self-managed VM. Supabase is not used in v1. For fast launch, task extraction uses OpenAI API; local LLM inference remains a later fallback option.
 
 Cloudflare can be used, but not as the only host for Vexa. Vexa's runtime depends on Postgres, Redis, long-running bot execution, and Docker/Kubernetes/process orchestration. Cloudflare Containers are useful for edge-adjacent services, but v1 should keep Vexa runtime on the VM and use Cloudflare for DNS, WAF, Access, Tunnel, Workers, Queues, and webhook entrypoints. Cloudflare Containers are now documented as available on Workers Paid, with predefined/custom instance limits up to 4 vCPU, 12 GiB memory, and 20 GB disk, so they are not the first target for GPU transcription or local LLM inference.
 
@@ -26,7 +26,7 @@ Sources:
 - Run self-hosted execution/state plane on one Linux VM for v1.
   - Vexa Docker Compose stack: API Gateway, Meeting API, Runtime API, Admin API, Dashboard, Redis, Postgres, MinIO.
   - Self-hosted transcription service on GPU if available; CPU only for low-concurrency testing.
-  - Self-hosted LLM service for summaries and task extraction.
+  - OpenAI API for fast-launch summaries and task extraction; self-hosted LLM service can replace it later.
   - SMTP relay configured by environment variables and verified with a test endpoint.
 - Keep Vexa source changes small.
   - Do not modify `vexa-bot` for calendar/tasks/mail.
@@ -57,7 +57,7 @@ Lists created/synced meetings with provider status, Vexa bot status, transcript 
 
 ### `POST /workflow/webhooks/vexa/meeting-completed`
 
-Idempotently receives Vexa completion events, fetches transcript, runs local LLM extraction, stores summary/tasks, and queues email.
+Idempotently receives Vexa completion events, fetches transcript, runs OpenAI-backed extraction, stores summary/tasks, and queues email.
 
 ### `GET /workflow/tasks` and `PATCH /workflow/tasks/{id}`
 
@@ -89,7 +89,7 @@ flowchart LR
   Workflow --> Vexa["Self-hosted Vexa API Gateway"]
   Vexa --> Bot["Vexa Runtime + Meeting Bots"]
   Bot --> Tx["Self-hosted Transcription"]
-  Workflow --> LLM["Self-hosted LLM"]
+  Workflow --> LLM["OpenAI API / future local LLM"]
   Workflow --> SMTP["SMTP Relay"]
   Workflow --> DB["Postgres + Redis + MinIO"]
 ```
@@ -120,7 +120,7 @@ flowchart LR
 ## Assumptions
 
 - Cloudflare-managed infrastructure is acceptable for edge routing and transient queue/control metadata.
-- Durable meeting data, transcripts, recordings, OAuth tokens, summaries, tasks, transcription, and LLM processing remain on the self-managed VM.
+- Durable meeting data, recordings, OAuth tokens, summaries, tasks, and transcription remain on the self-managed VM. Transcript text is sent to OpenAI for task extraction while `LLM_PROVIDER=openai`; local LLM fallback is deferred.
 - Google Calendar and Microsoft Graph are necessarily external trust boundaries because creating/syncing calendar meetings requires their APIs.
 - Supabase is excluded from v1.
 - Cloudflare Containers are not the v1 Vexa runtime target; they can be evaluated later for small stateless helpers or connector workers, not for GPU transcription, local LLM, or the Vexa bot fleet.

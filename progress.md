@@ -79,7 +79,19 @@
 - Added tests for webhook signature verification and transcript fetch client calls.
 - Verification:
   - `/Library/Frameworks/Python.framework/Versions/3.13/bin/pytest services/workflow-api/tests -q` passed: `26 passed`.
+- Switched Phase 5 fast-launch extraction path from local LLM to OpenAI API.
+- Added OpenAI Responses API extraction client:
+  - formats Vexa transcript segments into speaker lines
+  - requests strict JSON schema output
+  - validates summary, decisions, and tasks with Pydantic schemas
+- Integrated extraction into the Vexa meeting-completed webhook:
+  - stores generated summary and decisions in `meeting_outputs`
+  - replaces extracted tasks idempotently for the meeting
+  - records `llm_not_configured`, `extracted`, or `extraction_failed` status
+- Added OpenAI model/config env vars and tests.
+- Verification:
+  - `/Library/Frameworks/Python.framework/Versions/3.13/bin/pytest services/workflow-api/tests -q` passed: `29 passed`.
 
 ## Current Next Step
 
-Commit and push transcript webhook slice, then start Phase 5 local LLM task extraction.
+Commit and push OpenAI extraction slice, then start Phase 6 SMTP delivery.
