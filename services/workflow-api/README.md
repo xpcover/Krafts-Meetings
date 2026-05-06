@@ -51,6 +51,7 @@ Workflow API stores its own state in namespaced/product tables. Vexa already has
 | `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_SSL_MODE` | inherited | Self-hosted Postgres connection |
 | `VEXA_API_URL` | `http://api-gateway:8000` | Internal Vexa API Gateway URL |
 | `VEXA_API_KEY` | empty | API key used for bot and transcript calls |
+| `WORKFLOW_EDGE_SHARED_SECRET` | empty | Optional shared secret required on `/workflow/*` requests from Cloudflare Worker |
 | `WORKFLOW_ENCRYPTION_KEY` | empty | Required before OAuth token storage is implemented |
 | `WORKFLOW_OAUTH_STATE_SECRET` | empty | Signs OAuth callback state |
 | `WORKFLOW_PUBLIC_BASE_URL` | `http://localhost:8060` | Public callback base URL |

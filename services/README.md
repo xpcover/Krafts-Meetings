@@ -74,6 +74,7 @@ Vexa is a dozen services, not a monolith. Each service owns one concern (transcr
 | [agent-api](agent-api/) | 8100 | Chat sessions, TTS, scheduling (in-process worker), workspaces. |
 | [runtime-api](runtime-api/) | 8090 | Container lifecycle API — Docker, K8s, process backends. |
 | [workflow-api](workflow-api/) | 8060 | Krafts Meetings workflow layer: calendars, tasks, SMTP, Vexa orchestration |
+| [cloudflare-worker](cloudflare-worker/) | edge | Public Cloudflare Worker entrypoint for `/workflow/*` traffic |
 
 ### Domain Services
 
@@ -125,7 +126,9 @@ The scheduler is not a standalone service — it runs as an in-process worker in
 
 ### Krafts Meetings Workflow
 
-The `workflow-api` service is the product workflow layer for the `xpcover/Krafts-Meetings` fork. It is intentionally separate from `vexa-bot`: calendar OAuth, Google/Outlook meeting creation, transcript-driven task extraction, local LLM calls, and SMTP delivery live there while Vexa continues to own meeting bot execution and transcription.
+The `workflow-api` service is the product workflow layer for the `xpcover/Krafts-Meetings` fork. It is intentionally separate from `vexa-bot`: calendar OAuth, Google/Outlook meeting creation, transcript-driven task extraction, OpenAI fast-launch extraction, and SMTP delivery live there while Vexa continues to own meeting bot execution and transcription.
+
+The `cloudflare-worker` service is the public edge entrypoint. It forwards `/workflow/*` traffic through Cloudflare Tunnel to `workflow-api` and injects a shared-secret header when configured.
 
 ## Infrastructure Dependencies
 

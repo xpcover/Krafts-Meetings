@@ -1,6 +1,7 @@
 """Workflow API routes."""
 
 from datetime import UTC, datetime
+import hmac
 from typing import Annotated
 
 import httpx
@@ -26,7 +27,14 @@ from app.smtp_client import SmtpClient, SmtpDeliveryError
 from app.vexa_client import VexaClient
 from app.webhook_security import verify_vexa_signature
 
-router = APIRouter(prefix="/workflow", tags=["Workflow"])
+
+async def verify_edge_secret(request: Request):
+    expected = request.app.state.settings.edge_shared_secret
+    if expected and not hmac.compare_digest(request.headers.get("x-krafts-edge-secret", ""), expected):
+        raise HTTPException(status_code=401, detail="Invalid edge shared secret")
+
+
+router = APIRouter(prefix="/workflow", tags=["Workflow"], dependencies=[Depends(verify_edge_secret)])
 
 
 async def get_db(request: Request):

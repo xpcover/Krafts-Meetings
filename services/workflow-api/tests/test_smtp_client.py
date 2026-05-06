@@ -21,6 +21,7 @@ def _settings(**overrides) -> Settings:
         "vexa_api_url": "http://api-gateway:8000",
         "vexa_api_key": "",
         "vexa_webhook_secret": "",
+        "edge_shared_secret": "",
         "encryption_key": "",
         "oauth_state_secret": "",
         "public_base_url": "http://localhost:8060",

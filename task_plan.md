@@ -160,22 +160,22 @@ Acceptance:
 
 ### Phase 7: Cloudflare Control Plane
 
-Status: pending
+Status: in_progress
 
 Tasks:
 
-- Add Cloudflare Worker project for public entrypoints.
-- Route OAuth callbacks, Vexa webhooks, and workflow API traffic through the Worker.
+- Add Cloudflare Worker project for public entrypoints. Done.
+- Route OAuth callbacks, Vexa webhooks, and workflow API traffic through the Worker. Done for `/workflow/*` forwarding.
 - Use Cloudflare Queue/Workflow payloads containing IDs only, not transcript text.
-- Add Cloudflare Tunnel configuration docs for reaching `workflow-api`.
-- Add Wrangler config and secret inventory.
-- Add Worker smoke tests for route validation and forwarding.
+- Add Cloudflare Tunnel configuration docs for reaching `workflow-api`. Done at Worker package level; full VM runbook pending.
+- Add Wrangler config and secret inventory. Done.
+- Add Worker smoke tests for route validation and forwarding. Done.
 
 Acceptance:
 
-- Worker can reach `workflow-api` through Tunnel.
-- Public webhook routes validate source/secrets before forwarding.
-- Queue payloads contain only IDs and metadata, never transcript body text.
+- Worker can reach `workflow-api` through Tunnel. Pending live Cloudflare/Tunnel credentials.
+- Public webhook routes validate source/secrets before forwarding. Done with Worker shared-secret header plus Vexa webhook signature preservation for `workflow-api`.
+- Queue payloads contain only IDs and metadata, never transcript body text. Pending queue implementation; no Cloudflare queue persistence exists yet.
 
 ### Phase 8: Dashboard/API Consumption
 

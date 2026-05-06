@@ -101,7 +101,21 @@
   - classifies SMTP delivery errors as retryable or permanent where SMTP status codes expose that signal
   - avoids duplicate email sends on duplicate Vexa webhooks once any delivery record exists for the meeting
 - Added mocked SMTP tests.
+- Verification:
+  - `/Library/Frameworks/Python.framework/Versions/3.13/bin/pytest services/workflow-api/tests -q` passed: `35 passed`.
+  - `/opt/homebrew/bin/python3.13 -m compileall -q services/workflow-api/app` passed.
+- Started Phase 7 Cloudflare control plane.
+- Added `services/cloudflare-worker`:
+  - Cloudflare Worker module forwarding `/workflow/*` to Tunnel-backed `WORKFLOW_API_URL`
+  - Wrangler JSONC config with current compatibility date, `nodejs_compat`, and observability enabled
+  - shared-secret forwarding header for `workflow-api`
+  - CORS support for a configured dashboard origin
+  - tests for route rejection, secret forwarding, and Vexa webhook signature forwarding
+- Added optional `WORKFLOW_EDGE_SHARED_SECRET` gate to `workflow-api`.
+- Verification:
+  - `npm test` in `services/cloudflare-worker` passed: `3 passed`.
+  - `npx wrangler@latest deploy --dry-run` passed.
 
 ## Current Next Step
 
-Finish SMTP verification, commit and push SMTP slice, then start Cloudflare Worker/control-plane routing.
+Commit and push Cloudflare Worker/control-plane slice, then add Cloudflare Queue/Workflow async job handling or move to dashboard/API consumption.

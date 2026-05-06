@@ -77,6 +77,7 @@ CLAUDE_JSON_PATH=
 VEXA_API_URL=http://api-gateway:8000
 VEXA_API_KEY=
 WORKFLOW_VEXA_WEBHOOK_SECRET=
+WORKFLOW_EDGE_SHARED_SECRET=
 
 # Set to a Fernet key before storing OAuth tokens.
 # Generate with: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"

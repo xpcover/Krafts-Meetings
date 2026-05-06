@@ -1,0 +1,15 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "krafts-meetings-edge",
+  "main": "src/index.js",
+  "compatibility_date": "2026-05-06",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+  "vars": {
+    "WORKFLOW_API_URL": "https://workflow-api.example.com",
+    "CORS_ALLOW_ORIGIN": ""
+  }
+}
