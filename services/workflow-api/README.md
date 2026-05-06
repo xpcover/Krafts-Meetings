@@ -26,6 +26,7 @@ This first slice provides the service skeleton, configuration, database connecti
 | `GET` | `/workflow/oauth/{provider}/start?user_id={id}` | Generate a Google/Outlook OAuth authorization URL |
 | `GET` | `/workflow/oauth/{provider}/callback` | Exchange OAuth code and store encrypted provider tokens |
 | `POST` | `/workflow/webhooks/vexa/meeting-completed` | Verify Vexa webhook, fetch transcript, extract summary/tasks when OpenAI is configured, and mark meeting output |
+| `POST` | `/workflow/mail/test` | Verify SMTP connect/auth without sending meeting data |
 
 `POST /workflow/meetings` currently accepts `user_id` in the request body. Cloudflare/Vexa identity header integration is planned for a later auth pass.
 
@@ -86,4 +87,4 @@ pytest tests -q
 | 3 | compose wires service to Postgres and Vexa gateway | implemented |
 | 4 | DB ping helper exists and can be enabled on startup | implemented |
 | 5 | OAuth/calendar/task workflows | implemented |
-| 6 | SMTP workflows | pending later phases |
+| 6 | SMTP verification and post-meeting sends | implemented |

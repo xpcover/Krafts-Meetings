@@ -91,7 +91,17 @@
 - Added OpenAI model/config env vars and tests.
 - Verification:
   - `/Library/Frameworks/Python.framework/Versions/3.13/bin/pytest services/workflow-api/tests -q` passed: `29 passed`.
+- Started Phase 6 SMTP delivery.
+- Added stdlib-backed SMTP client:
+  - supports `starttls`, `ssl`, and plain SMTP modes
+  - verifies SMTP connect/auth with `NOOP` through `POST /workflow/mail/test`
+  - sends plain-text meeting summary and task assignment emails
+- Integrated SMTP delivery logging after successful OpenAI extraction:
+  - records sent, failed, and smtp-not-configured deliveries in `email_deliveries`
+  - classifies SMTP delivery errors as retryable or permanent where SMTP status codes expose that signal
+  - avoids duplicate email sends on duplicate Vexa webhooks once any delivery record exists for the meeting
+- Added mocked SMTP tests.
 
 ## Current Next Step
 
-Commit and push OpenAI extraction slice, then start Phase 6 SMTP delivery.
+Finish SMTP verification, commit and push SMTP slice, then start Cloudflare Worker/control-plane routing.

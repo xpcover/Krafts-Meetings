@@ -19,3 +19,9 @@ def test_workflow_vexa_webhook_route_exists():
     routes = {(route.path, tuple(sorted(route.methods or []))) for route in app.routes if hasattr(route, "path")}
 
     assert ("/workflow/webhooks/vexa/meeting-completed", ("POST",)) in routes
+
+
+def test_workflow_mail_test_route_exists():
+    routes = {(route.path, tuple(sorted(route.methods or []))) for route in app.routes if hasattr(route, "path")}
+
+    assert ("/workflow/mail/test", ("POST",)) in routes

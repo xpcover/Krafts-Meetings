@@ -140,23 +140,23 @@ Acceptance:
 
 ### Phase 6: SMTP Delivery
 
-Status: pending
+Status: in_progress
 
 Tasks:
 
-- Add SMTP config: host, port, username, password, TLS mode, sender.
-- Implement `POST /workflow/mail/test`.
-- Add summary email template.
-- Add task assignment email template.
-- Add delivery logging in `email_deliveries`.
-- Add retry classification for temporary vs permanent SMTP failures.
-- Add tests using a mocked/local SMTP server.
+- Add SMTP config: host, port, username, password, TLS mode, sender. Done.
+- Implement `POST /workflow/mail/test`. Done.
+- Add summary email template. Done.
+- Add task assignment email template. Done.
+- Add delivery logging in `email_deliveries`. Done.
+- Add retry classification for temporary vs permanent SMTP failures. Done.
+- Add tests using a mocked/local SMTP server. Done with mocked SMTP client tests.
 
 Acceptance:
 
-- SMTP config can be verified without sending meeting data.
-- Summary and task emails are queued/sent after post-meeting processing.
-- Delivery status and SMTP response are persisted.
+- SMTP config can be verified without sending meeting data. Done.
+- Summary and task emails are queued/sent after post-meeting processing. Done for synchronous v1 sends.
+- Delivery status and SMTP response are persisted. Done.
 
 ### Phase 7: Cloudflare Control Plane
 

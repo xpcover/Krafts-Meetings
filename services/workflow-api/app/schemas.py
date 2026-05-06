@@ -82,3 +82,8 @@ class MeetingExtraction(BaseModel):
     summary: str = ""
     decisions: list[str] = Field(default_factory=list)
     tasks: list[ExtractedTask] = Field(default_factory=list)
+
+
+class MailTestResponse(BaseModel):
+    status: str
+    smtp_response: str

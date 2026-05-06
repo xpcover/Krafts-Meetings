@@ -12,9 +12,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.calendar_clients import CalendarClient
 from app.crypto import TokenCipher
 from app.llm_client import OpenAIExtractionClient
-from app.models import IntegrationAccount, MeetingOutput, WorkflowCalendarEvent, WorkflowTask
+from app.models import EmailDelivery, IntegrationAccount, MeetingOutput, WorkflowCalendarEvent, WorkflowTask
 from app.oauth import authorization_url, exchange_code, parse_state, token_expiry
-from app.schemas import CalendarProvider, MeetingCreate, MeetingResponse, OAuthCallbackResponse, OAuthStartResponse
+from app.schemas import (
+    CalendarProvider,
+    MailTestResponse,
+    MeetingCreate,
+    MeetingResponse,
+    OAuthCallbackResponse,
+    OAuthStartResponse,
+)
+from app.smtp_client import SmtpClient, SmtpDeliveryError
 from app.vexa_client import VexaClient
 from app.webhook_security import verify_vexa_signature
 
@@ -42,6 +50,10 @@ def get_extraction_client(request: Request) -> OpenAIExtractionClient | None:
     if settings.llm_provider != "openai" or not settings.openai_api_key:
         return None
     return OpenAIExtractionClient(settings)
+
+
+def get_smtp_client(request: Request) -> SmtpClient:
+    return SmtpClient(request.app.state.settings)
 
 
 def _vexa_platform(provider: CalendarProvider) -> str:
@@ -76,6 +88,170 @@ def _serialize_event(event: WorkflowCalendarEvent) -> MeetingResponse:
         send_invites=event.send_invites,
         sync_status=event.sync_status,
     )
+
+
+def _attendee_emails(event: WorkflowCalendarEvent) -> list[str]:
+    emails = []
+    for attendee in event.attendees or []:
+        email = attendee.get("email") if isinstance(attendee, dict) else None
+        if email:
+            emails.append(email)
+    return list(dict.fromkeys(emails))
+
+
+def _summary_email_body(event: WorkflowCalendarEvent, summary: str | None, decisions: list[str], task_count: int) -> str:
+    decisions_text = "\n".join(f"- {decision}" for decision in decisions) or "- None recorded"
+    return (
+        f"Meeting: {event.title}\n\n"
+        f"Summary:\n{summary or 'No summary generated.'}\n\n"
+        f"Decisions:\n{decisions_text}\n\n"
+        f"Action items extracted: {task_count}\n"
+    )
+
+
+def _task_email_body(event: WorkflowCalendarEvent, task: WorkflowTask) -> str:
+    due_text = task.due_at.isoformat() if task.due_at else "No due date"
+    return (
+        f"Meeting: {event.title}\n\n"
+        f"Action item:\n{task.title}\n\n"
+        f"Description:\n{task.description or 'No additional description.'}\n\n"
+        f"Due: {due_text}\n"
+        f"Confidence: {task.confidence if task.confidence is not None else 'unknown'}\n"
+    )
+
+
+def _delivery_failure_status(exc: SmtpDeliveryError) -> str:
+    if exc.retryable is True:
+        return "retryable_failed"
+    if exc.retryable is False:
+        return "permanent_failed"
+    return "failed"
+
+
+async def _log_email_delivery(
+    db: AsyncSession,
+    event: WorkflowCalendarEvent,
+    recipient_email: str,
+    template: str,
+    status_value: str,
+    smtp_response: str | None = None,
+    error_message: str | None = None,
+    payload_ref: dict | None = None,
+    attempts: int = 0,
+):
+    db.add(EmailDelivery(
+        calendar_event_id=event.id,
+        recipient_email=recipient_email,
+        template=template,
+        status=status_value,
+        attempts=attempts,
+        last_attempt_at=datetime.now(UTC) if attempts else None,
+        sent_at=datetime.now(UTC) if status_value == "sent" else None,
+        smtp_response=smtp_response,
+        error_message=error_message,
+        payload_ref=payload_ref or {},
+    ))
+
+
+async def _send_post_meeting_emails(
+    db: AsyncSession,
+    event: WorkflowCalendarEvent,
+    smtp_client: SmtpClient,
+    summary: str | None,
+    decisions: list[str],
+    inserted_tasks: list[WorkflowTask],
+):
+    existing_delivery = (
+        await db.execute(select(EmailDelivery.id).where(EmailDelivery.calendar_event_id == event.id).limit(1))
+    ).first()
+    if existing_delivery:
+        return
+
+    recipients = _attendee_emails(event)
+    if not recipients and not inserted_tasks:
+        return
+
+    if not smtp_client.configured:
+        for recipient in recipients:
+            await _log_email_delivery(
+                db,
+                event,
+                recipient,
+                "meeting_summary",
+                "smtp_not_configured",
+                error_message="SMTP_HOST and SMTP_FROM_EMAIL are required",
+                payload_ref={"task_count": len(inserted_tasks)},
+            )
+        for task in inserted_tasks:
+            if task.owner_email:
+                await _log_email_delivery(
+                    db,
+                    event,
+                    task.owner_email,
+                    "task_assignment",
+                    "smtp_not_configured",
+                    error_message="SMTP_HOST and SMTP_FROM_EMAIL are required",
+                    payload_ref={"task_title": task.title},
+                )
+        return
+
+    if recipients:
+        body = _summary_email_body(event, summary, decisions, len(inserted_tasks))
+        for recipient in recipients:
+            try:
+                result = await smtp_client.send([recipient], f"Meeting summary: {event.title}", body)
+                await _log_email_delivery(
+                    db,
+                    event,
+                    recipient,
+                    "meeting_summary",
+                    result.status,
+                    smtp_response=result.response,
+                    payload_ref={"task_count": len(inserted_tasks)},
+                    attempts=1,
+                )
+            except SmtpDeliveryError as exc:
+                await _log_email_delivery(
+                    db,
+                    event,
+                    recipient,
+                    "meeting_summary",
+                    _delivery_failure_status(exc),
+                    error_message=str(exc),
+                    payload_ref={"task_count": len(inserted_tasks)},
+                    attempts=1,
+                )
+
+    for task in inserted_tasks:
+        if not task.owner_email:
+            continue
+        try:
+            result = await smtp_client.send(
+                [task.owner_email],
+                f"Action item: {task.title}",
+                _task_email_body(event, task),
+            )
+            await _log_email_delivery(
+                db,
+                event,
+                task.owner_email,
+                "task_assignment",
+                result.status,
+                smtp_response=result.response,
+                payload_ref={"task_title": task.title},
+                attempts=1,
+            )
+        except SmtpDeliveryError as exc:
+            await _log_email_delivery(
+                db,
+                event,
+                task.owner_email,
+                "task_assignment",
+                _delivery_failure_status(exc),
+                error_message=str(exc),
+                payload_ref={"task_title": task.title},
+                attempts=1,
+            )
 
 
 @router.post("/meetings", response_model=MeetingResponse, status_code=status.HTTP_201_CREATED)
@@ -166,6 +342,15 @@ async def list_meetings(user_id: int, db: Annotated[AsyncSession, Depends(get_db
     return [_serialize_event(event) for event in result.scalars().all()]
 
 
+@router.post("/mail/test", response_model=MailTestResponse)
+async def test_mail(smtp_client: Annotated[SmtpClient, Depends(get_smtp_client)]):
+    try:
+        result = await smtp_client.verify()
+    except SmtpDeliveryError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    return MailTestResponse(status=result.status, smtp_response=result.response)
+
+
 @router.get("/oauth/{provider}/start", response_model=OAuthStartResponse)
 async def oauth_start(provider: CalendarProvider, user_id: int, request: Request):
     settings = request.app.state.settings
@@ -247,6 +432,7 @@ async def vexa_meeting_completed(
     db: Annotated[AsyncSession, Depends(get_db)],
     vexa_client: Annotated[VexaClient | None, Depends(get_vexa_client)],
     extraction_client: Annotated[OpenAIExtractionClient | None, Depends(get_extraction_client)],
+    smtp_client: Annotated[SmtpClient, Depends(get_smtp_client)],
 ):
     settings = request.app.state.settings
     if not settings.vexa_webhook_secret:
@@ -332,6 +518,7 @@ async def vexa_meeting_completed(
         )
     )
     await db.execute(stmt)
+    inserted_tasks = []
     if extraction:
         # Idempotent enough for v1 webhook retries: replace tasks for this event with
         # the latest extraction output before inserting the current set.
@@ -341,7 +528,7 @@ async def vexa_meeting_completed(
         for task in existing_tasks:
             await db.delete(task)
         for task in extraction.tasks:
-            db.add(WorkflowTask(
+            workflow_task = WorkflowTask(
                 calendar_event_id=event.id,
                 owner_email=str(task.owner_email) if task.owner_email else None,
                 title=task.title,
@@ -350,7 +537,17 @@ async def vexa_meeting_completed(
                 status="open",
                 confidence=task.confidence,
                 source={"provider": "openai", "model": settings.openai_model},
-            ))
+            )
+            db.add(workflow_task)
+            inserted_tasks.append(workflow_task)
+        await _send_post_meeting_emails(
+            db,
+            event,
+            smtp_client,
+            extraction.summary,
+            extraction.decisions,
+            inserted_tasks,
+        )
 
     event.sync_status = generation_status
     await db.commit()
