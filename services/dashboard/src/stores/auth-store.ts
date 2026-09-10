@@ -20,7 +20,7 @@ interface AuthState {
   didLogout: boolean; // true after explicit logout — prevents SSO redirect loop
 
   // Actions
-  sendMagicLink: (email: string) => Promise<LoginResult>;
+  sendMagicLink: (email: string, name?: string) => Promise<LoginResult>;
   setAuth: (user: VexaUser, token: string) => void;
   logout: () => void;
   setUser: (user: VexaUser | null) => void;
@@ -37,13 +37,13 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       didLogout: false,
 
-      sendMagicLink: async (email: string): Promise<LoginResult> => {
+      sendMagicLink: async (email: string, name?: string): Promise<LoginResult> => {
         set({ isLoading: true });
         try {
           const response = await fetch(withBasePath("/api/auth/send-magic-link"), {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email }),
+            body: JSON.stringify(name ? { email, name } : { email }),
           });
 
           const data = await response.json();
