@@ -7,7 +7,7 @@ import { savePendingMeetingUrl } from "@/lib/pending-meeting";
 import { Loader2 } from "lucide-react";
 
 // Routes that don't require authentication
-const publicRoutes = ["/login", "/auth/verify", "/auth/zoom/callback"];
+const publicRoutes = ["/login", "/start", "/auth/verify", "/auth/zoom/callback"];
 
 interface AuthProviderProps {
   children: React.ReactNode;

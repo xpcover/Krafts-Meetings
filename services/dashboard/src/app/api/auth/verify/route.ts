@@ -14,6 +14,8 @@ const JWT_SECRET = process.env.JWT_SECRET || process.env.VEXA_ADMIN_API_KEY || "
 
 interface MagicLinkPayload {
   email: string;
+  /** Display name captured on the sign-up screen, absent for plain sign-ins. */
+  name?: string;
   type: string;
 }
 
@@ -148,7 +150,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Create the user
-      const createResult = await createUser({ email });
+      const createResult = await createUser({ email, name: payload.name });
 
       if (!createResult.success || !createResult.data) {
         if (createResult.error) {

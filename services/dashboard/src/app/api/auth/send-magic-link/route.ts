@@ -80,7 +80,7 @@ function isSecureRequest(): boolean {
          false;
 }
 
-async function handleDirectLogin(email: string): Promise<NextResponse> {
+async function handleDirectLogin(email: string, name?: string): Promise<NextResponse> {
   // Find or create user
   const findResult = await findUserByEmail(email);
 
@@ -102,7 +102,7 @@ async function handleDirectLogin(email: string): Promise<NextResponse> {
     }
 
     // Create new user
-    const createResult = await createUser({ email });
+    const createResult = await createUser({ email, name });
 
     if (!createResult.success || !createResult.data) {
       return NextResponse.json(
@@ -183,7 +183,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { email } = await request.json();
+    const { email, name } = await request.json();
 
     if (!email || typeof email !== "string") {
       return NextResponse.json(
@@ -201,13 +201,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Optional display name, supplied by the sign-up screen. Trimmed here so a
+    // whitespace-only value falls back to the address-derived default.
+    const displayName =
+      typeof name === "string" && name.trim().length > 0 ? name.trim() : undefined;
+
     // Check if SMTP is configured
     const smtpEnabled = isSmtpConfigured();
 
     if (!smtpEnabled) {
       // Direct login mode - no email verification
       console.log("SMTP not configured, using direct login mode for:", email);
-      return handleDirectLogin(email);
+      return handleDirectLogin(email, displayName);
     }
 
     // Magic Link mode - send email verification
@@ -234,7 +239,7 @@ export async function POST(request: NextRequest) {
 
     // Generate JWT token with email
     const token = jwt.sign(
-      { email, type: "magic-link" },
+      displayName ? { email, name: displayName, type: "magic-link" } : { email, type: "magic-link" },
       JWT_SECRET,
       { expiresIn: MAGIC_LINK_EXPIRY }
     );
